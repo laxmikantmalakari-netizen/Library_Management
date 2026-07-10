@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Library Registration</title>
+<style>
+body{
+background:url('https://web-material3.yokogawa.com/15/28517/files/DigitalizedSolutionLibrary.png') center center fixed;
+background-size:cover;
+font-family:Arial,sans-serif;
+}
+.container{
+width:380px;max-width:90%;
+margin:50px auto;
+background:rgba(0,0,0,.75);
+padding:30px;
+border-radius:10px;
+text-align:center;
+}
+h1{color:orange;}
+input{
+width:90%;
+padding:12px;
+margin:10px 0;
+border:none;
+border-radius:5px;
+}
+button{
+width:95%;
+padding:12px;
+background:red;
+color:yellow;
+font-size:18px;
+border:none;
+cursor:pointer;
+border-radius:5px;
+}
+button:hover{background:darkred;}
+p,a{color:white;}
+a{color:orange;text-decoration:none;}
+#msg{margin-top:10px;font-weight:bold;}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Register</h1>
+
+<input type="text" id="name" placeholder="Full Name">
+<input type="email" id="email" placeholder="Email Address">
+<input type="password" id="password" placeholder="Password">
+<input type="password" id="confirmPassword" placeholder="Confirm Password">
+
+<button id="registerBtn" onclick="registerUser()">Register</button>
+
+<div id="msg"></div>
+
+<p>Already have an account?
+<a href="login.html">Login</a>
+</p>
+
+<p><a href="index.html">← Back to Home</a></p>
+</div>
+
+<script>
+// Backend Register API
+const API_URL="http://localhost:5000/api/auth/register";
+
+// Display messages
+function showMessage(message,color){
+ const msg=document.getElementById("msg");
+ msg.style.color=color;
+ msg.innerHTML=message;
+}
+
+// Register Function
+async function registerUser(){
+
+ // Read values from form
+ const name=document.getElementById("name").value.trim();
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ const confirmPassword=document.getElementById("confirmPassword").value;
+ const btn=document.getElementById("registerBtn");
+
+ // Validation
+ if(!name||!email||!password||!confirmPassword){
+   return showMessage("Please fill all fields.","yellow");
+ }
+
+ const emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+ if(!emailPattern.test(email)){
+   return showMessage("Please enter a valid email.","yellow");
+ }
+
+ if(password.length<6){
+   return showMessage("Password must be at least 6 characters.","yellow");
+ }
+
+ if(password!==confirmPassword){
+   return showMessage("Passwords do not match.","yellow");
+ }
+
+ // Create object matching backend User schema
+ const userData={
+   name:name,
+   email:email,
+   password:password
+ };
+
+ try{
+   btn.disabled=true;
+   btn.innerHTML="Registering...";
+
+   const response=await fetch(API_URL,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify(userData)
+   });
+
+   const data=await response.json();
+
+   if(response.ok && data.success){
+      showMessage(data.message,"lightgreen");
+      setTimeout(()=>window.location.href="login.html",1500);
+   }else{
+      showMessage(data.message||"Registration Failed","red");
+   }
+
+ }catch(err){
+   console.error(err);
+   showMessage("Unable to connect to backend server.","red");
+ }finally{
+   btn.disabled=false;
+   btn.innerHTML="Register";
+ }
+
+}
+</script>
+</body>
+</html>

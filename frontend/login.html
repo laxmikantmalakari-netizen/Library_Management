@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Library Login</title>
+<style>
+body{
+background:url("https://web-material3.yokogawa.com/15/28517/files/DigitalizedSolutionLibrary.png") center center fixed;
+background-size:cover;
+font-family:Arial,Helvetica,sans-serif;
+}
+.container{
+width:350px;max-width:90%;margin:80px auto;background:rgba(0,0,0,.7);
+padding:30px;border-radius:10px;text-align:center;
+}
+h1{color:orange;}
+input{width:90%;padding:12px;margin:10px;border:none;border-radius:5px;}
+button{width:95%;padding:12px;background:red;color:yellow;border:none;font-size:18px;cursor:pointer;border-radius:5px;}
+button:hover{background:darkred;}
+a{color:orange;text-decoration:none;}
+p{color:white;}
+#msg{margin-top:10px;font-weight:bold;}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Login</h1>
+
+<input id="email" type="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+
+<button id="loginBtn" onclick="loginUser()">Login</button>
+
+<div id="msg"></div>
+
+<p>Don't have an account?
+<a href="register.html">Register</a></p>
+
+<p><a href="index.html">← Back to Home</a></p>
+</div>
+
+<script>
+// Backend Login API
+const API_URL="http://localhost:5000/api/auth/login";
+
+// Show status message
+function showMessage(message,color){
+ const msg=document.getElementById("msg");
+ msg.style.color=color;
+ msg.innerHTML=message;
+}
+
+// Login function
+async function loginUser(){
+
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ const btn=document.getElementById("loginBtn");
+
+ if(!email || !password){
+   return showMessage("Please enter email and password.","yellow");
+ }
+
+ try{
+   btn.disabled=true;
+   btn.innerHTML="Logging in...";
+
+   const response=await fetch(API_URL,{
+      method:"POST",
+      headers:{
+         "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+         email:email,
+         password:password
+      })
+   });
+
+   const data=await response.json();
+
+   if(response.ok && data.success){
+
+      // Save JWT for future authenticated requests
+      localStorage.setItem("token",data.token);
+
+      // Save logged-in user details (optional)
+      localStorage.setItem("user",JSON.stringify(data.user));
+
+      showMessage("Login Successful! Redirecting...","lightgreen");
+
+      setTimeout(()=>{
+         window.location.href="index.html";
+      },1500);
+
+   }else{
+
+      // If the user is not registered or password is wrong,
+      // your backend returns "Invalid Email or Password".
+      // Therefore login is denied.
+      showMessage(data.message || "Invalid Email or Password.","red");
+
+   }
+
+ }catch(error){
+
+   console.error(error);
+   showMessage("Unable to connect to backend server.","red");
+
+ }finally{
+
+   btn.disabled=false;
+   btn.innerHTML="Login";
+
+ }
+
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Library Manager</title>
+<style>
+body{background:url('https://web-material3.yokogawa.com/15/28517/files/DigitalizedSolutionLibrary.png') center center fixed;background-size:cover;font-family:Arial,sans-serif;margin:40px}
+h1{color:orange}
+.book-card{border:1px solid #ccc;padding:10px;margin:10px 0;color:white}
+input,textarea{width:300px;padding:8px;margin:5px 0}
+button{background:red;color:yellow;padding:10px;border:none;cursor:pointer}
+#top{display:flex;justify-content:space-between;align-items:center}
+</style>
+</head>
+<body>
+<div id="top">
+<h1>Library CRUD UI</h1>
+<button onclick="logout()">Logout</button>
+</div>
+
+<div id="book-form">
+<input id="title" placeholder="Title"><br>
+<input id="author" placeholder="Author"><br>
+<textarea id="description" placeholder="Description"></textarea><br>
+<input type="date" id="published_date"><br>
+<button onclick="addBook()">Add Book</button>
+</div>
+<hr>
+<div id="book-list"></div>
+
+<script>
+const API="http://localhost:5000/api/books";
+const token=localStorage.getItem("token");
+
+// Redirect if user is not logged in
+if(!token){
+ alert("Please login first.");
+ window.location.href="login.html";
+}
+
+// Fetch all books
+async function fetchBooks(){
+ try{
+  const res=await fetch(API,{
+   headers:{Authorization:`Bearer ${token}`}
+  });
+  const result=await res.json();
+  const books=result.data || result;
+  const list=document.getElementById("book-list");
+  list.innerHTML="";
+  books.forEach(book=>{
+   list.innerHTML+=`
+   <div class="book-card">
+    <h3>${book.title}</h3>
+    <p><b>Author:</b> ${book.author}</p>
+    <button onclick="deleteBook('${book._id}')">Delete</button>
+   </div>`;
+  });
+ }catch(e){console.error(e);}
+}
+
+// Add book
+async function addBook(){
+ const data={
+  title:title.value,
+  author:author.value,
+  description:description.value,
+  published_date:published_date.value
+ };
+ const res=await fetch(API,{
+  method:"POST",
+  headers:{
+   "Content-Type":"application/json",
+   "Authorization":`Bearer ${token}`
+  },
+  body:JSON.stringify(data)
+ });
+ const result=await res.json();
+ alert(result.message||"Done");
+ fetchBooks();
+}
+
+// Delete book
+async function deleteBook(id){
+ if(!confirm("Delete this book?")) return;
+ const res=await fetch(API+"/"+id,{
+  method:"DELETE",
+  headers:{Authorization:`Bearer ${token}`}
+ });
+ const result=await res.json();
+ alert(result.message||"Deleted");
+ fetchBooks();
+}
+
+// Logout
+function logout(){
+ localStorage.removeItem("token");
+ localStorage.removeItem("user");
+ window.location.href="login.html";
+}
+
+fetchBooks();
+</script>
+</body>
+</html>
