@@ -6,7 +6,7 @@
 <style>
 body{background:url('https://web-material3.yokogawa.com/15/28517/files/DigitalizedSolutionLibrary.png') center center fixed;background-size:cover;font-family:Arial,sans-serif;margin:40px}
 h1{color:orange}
-.book-card{border:1px solid #ccc;padding:10px;margin:10px 0;color:white}
+.book-card{border:1px solid #ccc;padding:10px;margin:10px 0;color:white;background: rgba(0,0,0,0.6);border-radius:5px;}
 input,textarea{width:300px;padding:8px;margin:5px 0}
 button{background:red;color:yellow;padding:10px;border:none;cursor:pointer}
 #top{display:flex;justify-content:space-between;align-items:center}
@@ -48,48 +48,74 @@ async function fetchBooks(){
   const books=result.data || result;
   const list=document.getElementById("book-list");
   list.innerHTML="";
-  books.forEach(book=>{
-   list.innerHTML+=`
-   <div class="book-card">
-    <h3>${book.title}</h3>
-    <p><b>Author:</b> ${book.author}</p>
-    <button onclick="deleteBook('${book._id}')">Delete</button>
-   </div>`;
-  });
- }catch(e){console.error(e);}
+  
+  if(Array.isArray(books)){
+      books.forEach(book=>{
+       list.innerHTML+=`
+       <div class="book-card">
+        <h3>${book.title}</h3>
+        <p><b>Author:</b> ${book.author}</p>
+        <button onclick="deleteBook('${book._id}')">Delete</button>
+       </div>`;
+      });
+  }
+ }catch(e){console.error("Fetch error:", e);}
 }
 
 // Add book
 async function addBook(){
+ // Explicitly fetch values to avoid reference crashes
+ const titleEl = document.getElementById("title");
+ const authorEl = document.getElementById("author");
+ const descEl = document.getElementById("description");
+ const dateEl = document.getElementById("published_date");
+
  const data={
-  title:title.value,
-  author:author.value,
-  description:description.value,
-  published_date:published_date.value
+  title: titleEl.value,
+  author: authorEl.value,
+  description: descEl.value,
+  published_date: dateEl.value
  };
- const res=await fetch(API,{
-  method:"POST",
-  headers:{
-   "Content-Type":"application/json",
-   "Authorization":`Bearer ${token}`
-  },
-  body:JSON.stringify(data)
- });
- const result=await res.json();
- alert(result.message||"Done");
- fetchBooks();
+ 
+ try {
+     const res=await fetch(API,{
+      method:"POST",
+      headers:{
+       "Content-Type":"application/json",
+       "Authorization":`Bearer ${token}`
+      },
+      body:JSON.stringify(data)
+     });
+     const result=await res.json();
+     alert(result.message||"Done");
+     
+     if(res.ok) {
+         // Clear form inputs upon success
+         titleEl.value = "";
+         authorEl.value = "";
+         descEl.value = "";
+         dateEl.value = "";
+         fetchBooks();
+     }
+ } catch(e) {
+     console.error("Add error:", e);
+ }
 }
 
 // Delete book
 async function deleteBook(id){
  if(!confirm("Delete this book?")) return;
- const res=await fetch(API+"/"+id,{
-  method:"DELETE",
-  headers:{Authorization:`Bearer ${token}`}
- });
- const result=await res.json();
- alert(result.message||"Deleted");
- fetchBooks();
+ try {
+     const res=await fetch(API+"/"+id,{
+      method:"DELETE",
+      headers:{Authorization:`Bearer ${token}`}
+     });
+     const result=await res.json();
+     alert(result.message||"Deleted");
+     fetchBooks();
+ } catch(e) {
+     console.error("Delete error:", e);
+ }
 }
 
 // Logout
@@ -99,7 +125,14 @@ function logout(){
  window.location.href="login.html";
 }
 
-fetchBooks();
+// Attach functions explicitly to global window context for reliable inline execution
+window.fetchBooks = fetchBooks;
+window.addBook = addBook;
+window.deleteBook = deleteBook;
+window.logout = logout;
+
+// Initial load
+window.onload = fetchBooks;
 </script>
 </body>
 </html>
