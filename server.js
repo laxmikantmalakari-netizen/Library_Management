@@ -1,89 +1,52 @@
-/********************************************************************
- *
- *  server.js
- *
 
+
+/********************************************************************
+ *  server.js
  *  -----------------
- *  ✔ Create Express S
+ *  ✔ Create Express Server
  *  ✔ Connect MongoDB
  *  ✔ Accept JSON Data
  *  ✔ Enable CORS
  *  ✔ Register API Routes
  *  ✔ Start Server
- *
- ***********************              *********************************************/
+ *******************************************************************/
 
 const path = require("path");
-
-// Import Express Framework
 const express = require("express");
-
-// Import CORS package
-// CORS allows frontend (HTML) to communicate with backend
 const cors = require("cors");
-
-// Load environment variables from .env file
 require("dotenv").config();
 
-// Import MongoDB Connection
+// 1. Import Database Connection and Routes
 const connectDB = require("./config/db");
-
-// Import Book Routes
 const bookRoutes = require("./routes/bookRoutes");
-
-
-// Create Express Application
-const app = express();
-
-// Import Authentication Routes
 const authRoutes = require("./routes/authRoutes");
 
-// Connect MongoDB Database
+// 2. Initialize Express Application
+const app = express();
+
+// 3. Connect to MongoDB
 connectDB();
 
-
-
-// Enable CORS
-// Without this your frontend cannot call backend APIs
+// 4. Global Middleware Configuration
 app.use(cors());
+app.use(express.json()); // Parses incoming JSON data
+app.use(express.static(path.join(__dirname, "frontend"))); // Serves frontend files
 
-app.use(express.static(path.join(__dirname, "frontend")));
-
-// Parse JSON Data
-// Converts incoming JSON request into JavaScript Object
-app.use(express.json());
-
-
-// Home Route
+// 5. Frontend Main Route
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "frontend", "index.html"));
 });
 
-
-// Authentication APIs
+// 6. Register API Routes
 app.use("/api/auth", authRoutes);
-
-
-
-// Register Book Routes
-// Every request starting with /api/books
-// will be handled inside bookRoutes.js
-
-
 app.use("/api/books", bookRoutes);
 
-app.use("/api/auth", authRoutes);
-
-// Read Port Number from .env file
+// 7. Define Port and Start Server
 const PORT = process.env.PORT || 5000;
 
-
-// Start Server
 app.listen(PORT, () => {
-
     console.log("=================================");
-    console.log(" Server Started Successfully");
-    console.log(` Running on Port : ${PORT}`);
+    console.log(" Server Started Successfully     ");
+    console.log(` Running on Port : ${PORT}       `);
     console.log("=================================");
-
-})
+}); // Fixed missing closing bracket here
